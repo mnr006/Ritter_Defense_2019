@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+First, setting the scence, and loading the required packages.
+```{r}
+#set working directory
+setwd("~/Desktop/Ritter_Defense_2019/migration_work")
+
+#diverSity used to calculate and plot migration networks
+if(!require(diveRsity)){install.packages("diverRsity");library(diveRsity)} 
+
+#here, using all 6 wells
+divMigrate(infile = "populations.stacks.p6.r.6.snps.gen", outfile = NULL, boots = 1000, stat = "gst",  filter_threshold = 0, plot_network = TRUE,  plot_col = "darkblue", para = FALSE)
+
+
+```
+
+```{r}
+
+#here I've rearranged the genepop file to combine all wells in the same floodplain (total n=3)
+
+divMigrate(infile = "populations.stacks.p3.r.6.snps.gen", outfile = NULL, boots = 1000, stat = "all",  filter_threshold = 0, plot_network = TRUE,  plot_col = "darkblue", para = FALSE)
+
+```
