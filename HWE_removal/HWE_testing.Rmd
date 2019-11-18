@@ -1,0 +1,103 @@
+---
+title: "HWE_testing"
+output: html_notebook
+---
+#Installing the proper necessary packages
+```{r}
+#Using dplyr to manipulate data tables and columns within
+if(!require(dplyr)){
+    install.packages("dplyr")
+    library(dplyr)
+}
+```
+
+
+#Preparing the data
+```{r}
+#loading in all the data
+
+HA_19_HWE <- read.table("HWEtest_HA19_forR", sep="\t", header=TRUE)
+HA_9_HWE <- read.table("HWEtest_HA9_forR", sep="\t", header=TRUE)
+HA_15_HWE <- read.table("HWEtest_HA15_forR", sep="\t", header=TRUE)
+KA_ST5R_HWE <- read.table("HWEtest_KA_ST5R", sep="\t", header=TRUE)
+KA_GRBD_HWE <- read.table("HWEtest_KA_GRBD", sep="\t", header=TRUE)
+Wurtz_HWE <- read.table("HWEtest_Wurtz", sep="\t", header=TRUE)
+```
+
+#Making and comparing loci lists
+In linux- I printed out ALL the sites from my original beagle file made.
+I will now compare them to the loci list generated here, combine them, and generate a list of markers that do not contain any HWE variants.
+
+```{r}
+all_markers_from_beagle <- read.table("all_markers_in_datalabeledcolumn.txt", sep="\t", header=TRUE)
+markers_to_be_excluded_0.05 <- read.table("markers_to_be_excluded_0.05_correctlylabeled", sep="\t", header=TRUE)
+
+marker_lists_combined_0.05 <- rbind(all_markers_from_beagle, markers_to_be_excluded_0.05)
+
+mutating_dataframe_0.05 <- marker_lists_combined_0.05 %>% add_count(Position)
+
+#creating dataset without loci that are in both dataframes. Aiming to create a dataset with only loci that are in the original beagle angsd file and NOT in the HWE variant list. Also being sure to NOT include those loci that are only in the HWE variant list.
+counts_of_markers_to_include_0.05 <- mutating_dataframe_0.05 %>%
+  filter(n==1, Data ==1)
+#comparing this to the set I would have had without making sure data was only coming from the angsd dataset
+counts_of_markers_to_compare_0.05 <- mutating_dataframe_0.01 %>%
+  filter(n==1)
+
+#this is the list you will want to use for angsd!
+angsd_ready_list_0.05 <- counts_of_markers_to_include_0.05 %>% select("Position")
+save(angsd_ready_list_0.05, file="angsd_ready_list_0.05", ascii= TRUE)
+```
+
+Now making the lists of which loci have P-values less than 0.001, and combining them to look at which appear in more than 2 populations.
+
+```{r}
+#only looking for pvalues <0.001
+HA_19_HWE_significantvalues_.001 <- HA_19_HWE %>% filter(p.value <0.001)
+HA_9_HWE_significantvalues_.001 <- HA_9_HWE %>% filter(p.value <0.001)
+HA_15_HWE_significantvalues_.001 <- HA_15_HWE %>% filter(p.value <0.001)
+KA_ST5R_HWE_significantvalues_.001 <- KA_ST5R_HWE %>% filter(p.value <0.001)
+KA_GRBD_HWE_significantvalues_.001 <- KA_GRBD_HWE %>% filter(p.value <0.001)
+Wurtz_HWE_significantvalues_.001 <- Wurtz_HWE %>% filter(p.value <0.001)
+
+#combining into one dataframe
+HWE_sigfig_all_bound_.001 <- rbind(HA_19_HWE_significantvalues_.001, HA_9_HWE_significantvalues_.001, HA_15_HWE_significantvalues_.001, KA_ST5R_HWE_significantvalues_.001, KA_GRBD_HWE_significantvalues_.001, Wurtz_HWE_significantvalues_.001)
+
+#counting each loci
+counts_of_loci_morethan1_.001 <-HWE_sigfig_all_bound_.001 %>% count(Position) %>% filter(n>1)
+counts_of_loci_.001 <- HWE_sigfig_all_bound_.001 %>% count(Position)
+#comparing numbers
+nrow(counts_of_loci_.001)
+nrow(counts_of_loci_morethan1_.001)
+
+just_marker_names_.001 <- counts_of_loci_morethan1_.001 %>% select(Position)
+just_marker_names_.001
+save(just_marker_names_.001, file="markers_to_be_excluded_.001", ascii=TRUE)
+head(just_marker_names_.001)
+tail(just_marker_names_.001)
+
+all_markers_from_beagle_labelled <- read.table("all_markers_in_datalabeledcolumn.txt", sep="\t", header=TRUE)
+markers_to_be_excluded_.001 <- read.table("markers_to_be_excluded_.001_correctlynamed", sep="\t", header=TRUE)
+
+```
+
+
+Combining the list of loci generated in angsd and the list generated from HWE variants to then separate out which are only appearing once (i.e. removing variants which are revealed because they show up in both lists)
+
+```{r}
+marker_lists_combined_0.001 <- rbind(all_markers_from_beagle_labelled, markers_to_be_excluded_.001)
+
+mutating_dataframe_0.001 <- marker_lists_combined_0.001 %>% add_count(Position)
+
+#creating dataset without loci that are in both dataframes. Aiming to create a dataset with only loci that are in the original beagle angsd file and NOT in the HWE variant list. Also being sure to NOT include those loci that are only in the HWE variant list.
+counts_of_markers_to_include_0.001 <- mutating_dataframe_0.001 %>%
+  filter(n==1, Data ==1)
+#comparing this to the set I would have had without making sure data was only coming from the angsd dataset
+counts_of_markers_to_compare_0.001 <- mutating_dataframe_0.001 %>%
+  filter(n==1)
+
+###this is the angsd datafile I want to be working with
+#counts_of_markers_to_include_0.001
+angsd_ready_list_0.001 <- counts_of_markers_to_include_0.001 %>% select("Position")
+save(angsd_ready_list_0.001, file="angsd_ready_list_0.001", ascii= TRUE)
+write.csv(angsd_ready_list_0.001,'angsd_ready_list_0.001.csv', quote=FALSE, row.names=FALSE)
+```
