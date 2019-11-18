@@ -4,6 +4,9 @@ output: html_notebook
 ---
 #Installing the proper necessary packages
 ```{r}
+#setting the working directory first
+setwd("~/Desktop/Ritter_Defense_2019/HWE_removal")
+
 #Using dplyr to manipulate data tables and columns within
 if(!require(dplyr)){
     install.packages("dplyr")
