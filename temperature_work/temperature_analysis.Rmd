@@ -1,0 +1,42 @@
+---
+title: "temperature_analysis"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+#Setting the stage
+```{r}
+#setting correct working directory
+setwd("~/Desktop/Stygobromus_Pop_Gen_Thesis/temperature_work")
+
+#loading in the proper libraries
+#ggplot2 was used to visualize the temp data in a bar graph
+if(!require(ggplot2)){install.packages("ggplot2");library(ggplot2)}
+
+#loading in the data
+raw_temp_data <- read.csv("temperature_wells_17_19.csv", header= TRUE)
+```
+
+```{r warning=FALSE}
+#creating a bar plot
+ggplot(raw_temp_data, aes(x=Site, y=Temp, fill=Site)) + 
+  stat_summary(fun.y="mean", geom="bar") +
+  stat_summary(geom= "errorbar", fun.data=mean_se, position="dodge") +
+  theme_classic(base_family="serif") +
+  labs(x="Wells", y = "Average Temperature (°C)") +
+  theme(axis.text=element_text(size=25),
+        axis.title=element_text(size=30))+
+  scale_y_continuous(expand = c(0,0),limits = c(0,15.5)) +
+ scale_x_discrete(limits=c("GRBD","ST5R","Wurtz", "HA15", "HA19", "HA9")) + scale_fill_manual(values=c("darkgreen", "darkblue", "dodgerblue", "cyan", "darkolivegreen", "black")) +
+  guides(fill=FALSE)
+
+```
+
+Testing the statistical significance of comparisons
+```{r}
+stat_testing <- aov(Temp ~ Site, data=raw_temp_data)
+summary(stat_testing)
+TukeyHSD(stat_testing)
+```
+
