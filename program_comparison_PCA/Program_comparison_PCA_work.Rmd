@@ -1,0 +1,219 @@
+---
+title: "Program_comparison_PCA_work"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+#Background work
+Setting the scene
+```{r}
+#loading libraries
+if(!require(vcfR)){install.packages("vcfR");library(vcfR)} 
+#to convert vcfs
+
+if(!require(ggplot2)){install.packages("ggplot2");library(ggplot2)} 
+#to visualize figures
+
+if(!require(ggpubr)){install.packages("ggpubr");library(ggpubr)} 
+#to combine all 3 PCAs if desired
+
+if(!require(ggpubr)){install.packages("ggpubr");library(ggpubr)} 
+#to work with genepop/genind/genlight objects
+
+#setting working directory
+setwd("~/Desktop/Ritter_Defense_2019/program_comparison_PCA")
+
+#loading in some data
+stacks_vcf <-read.vcfR("stacks_data.vcf")
+GATK_vcf <-read.vcfR("GATK_data.vcf")
+```
+
+#ANGSD
+```{r}
+#This is based off a script from M. Fumagalli
+#assigning files
+in_file <- ("angsd_data.cov")
+annot_file <- ("angsd_poplabel.txt")
+
+# Read input file
+covar <- read.table(in_file, stringsAsFact=F);
+
+# Read annot file
+annot <- read.table(annot_file, sep="\t", header=T); # note that plink cluster files are usually tab-separated instead
+
+# Parse components to analyze
+comp <- c(1,2)
+
+# Eigenvalues
+eig <- eigen(covar, symm=TRUE);
+eig$val <- eig$val/sum(eig$val);
+cat(signif(eig$val, digits=3)*100,"\n");
+
+# Plot
+PC <- as.data.frame(eig$vectors)
+colnames(PC) <- gsub("V", "PC", colnames(PC))
+PC$Pop <- factor(annot$CLUSTER)
+PC$Tra <- factor(annot$IID)
+PC$Lab <- factor(annot$FID)
+
+```
+
+```{r}
+#PCA aesthetics
+colors <- c("darkgreen", "darkolivegreen", "black", "darkblue", "dodgerblue", "cyan")
+
+#title <- paste("PC",comp[1]," (",signif(eig$val[comp[1]], digits=3)*100,"%)"," / PC",comp[2]," (",signif(eig$val[comp[2]], digits=3)*100,"%)",sep="",collapse="")
+x_axis_angsd = paste("PC",comp[1],sep="")
+y_axis_angsd = paste("PC",comp[2],sep="")
+x_axis_label_angsd = paste("PC",comp[1]," (",signif(eig$val[comp[1]], digits=3)*100,"%)",sep="",collapse="")
+y_axis_label_angsd = paste("PC",comp[2]," (",signif(eig$val[comp[2]], digits=3)*100,"%)",sep="",collapse="")
+
+#Actually plotting
+angsd_PCA_fig_whitelist <- ggplot(PC, aes_string(x=x_axis_angsd, y=y_axis_angsd, colour= "Pop", alpha =0.7)) 
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + geom_point(size=4.5)
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + stat_ellipse(level = 0.95, size = 1)
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + scale_color_manual(values = colors,name= "Well", labels = c("Kalispell GRBD", "Kalispell ST5R", "Wurtz", "Nyack HA15", "Nyack HA19", "Nyack HA9")) 
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + geom_hline(yintercept = 0) 
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + geom_vline(xintercept = 0) 
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + theme_classic(base_family="serif")
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + xlab(x_axis_label_angsd)
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + ylab(y_axis_label_angsd)
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + guides(alpha=FALSE)
+angsd_PCA_fig_whitelist <- angsd_PCA_fig_whitelist + theme(legend.title.align=0.5,axis.text=element_text(size=30),legend.text = element_text(size=25),axis.title=element_text(size=30), legend.title = element_text(size=30), panel.background = element_blank(),panel.border=element_rect(fill=NA),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),strip.background=element_blank(),axis.text.x=element_text(colour="black"),axis.text.y=element_text(colour="black"),axis.ticks=element_line(colour="black"),plot.margin=unit(c(1,1,1,1),"line"))
+angsd_PCA_fig_whitelist
+
+ggsave("angsd_PCA.pdf")
+```
+
+#GATK
+```{r}
+#converting to genlight: takes about a minute
+GATK.genlight <- vcfR2genlight(GATK_vcf, n.cores=1) #this took a couple of minutes
+#adjusting data for PCA
+#need to first run script that applies glPcaFast function (glPcaFast_script.R available from adegenet, see citations at bottom of page)
+pca.1 <- glPcaFast(GATK.genlight, nf=300) #also took several minutes
+pca.1
+pca.1$eig[1]/sum(pca.1$eig)
+pca.1$eig[2]/sum(pca.1$eig)
+
+#loading in population info
+GATK.pop.data <- read.table("GATK_poplabel.txt", sep = "\t", header = TRUE)
+#confirming accurate number
+all(colnames(GATK_vcf@gt)[-1] == GATK.pop.data$ID) #nailed it
+
+#indicating the ploidy number
+ploidy(GATK.genlight) <- 2
+
+#adding in the population data
+pop(GATK.genlight) <- GATK.pop.data$STATE
+
+#making a PCA plot
+pca.scores <- as.data.frame(pca.1$scores)
+pca.scores$pop <- pop(GATK.genlight)
+
+comp <- c(1,2)
+```
+
+```{r}
+#Setting up PCA labeling
+x_axis_label_gatk = paste("PC",comp[1]," (",signif(pca.1$eig[1]/sum(pca.1$eig), digits=3)*100,"%)",sep="",collapse="")
+y_axis_label_gatk = paste("PC",comp[2]," (",signif(pca.1$eig[2]/sum(pca.1$eig), digits=3)*100,"%)",sep="",collapse="")
+
+
+cols <- c("darkgreen", "darkolivegreen", "black", "darkblue", "dodgerblue", "cyan")
+
+#actually setting up ggplot
+GATK_PCA_fig <- ggplot(pca.scores, aes(x=PC1, y=PC2, colour=pop, alpha=.7))
+GATK_PCA_fig <- GATK_PCA_fig + geom_point(size=4.5)
+GATK_PCA_fig <- GATK_PCA_fig + stat_ellipse(level = 0.95, size = 1)
+GATK_PCA_fig <- GATK_PCA_fig + scale_color_manual(values = cols, name= "Well", labels = c("Kalispell GRBD", "Kalispell ST5R", "Wurtz", "Nyack HA15", "Nyack HA19", "Nyack HA9")) 
+GATK_PCA_fig <- GATK_PCA_fig + geom_hline(yintercept = 0) 
+GATK_PCA_fig <- GATK_PCA_fig + geom_vline(xintercept = 0) 
+GATK_PCA_fig <- GATK_PCA_fig + theme_classic(base_family="serif")
+GATK_PCA_fig <- GATK_PCA_fig + xlab(x_axis_label_gatk)
+GATK_PCA_fig <- GATK_PCA_fig + ylab(y_axis_label_gatk)
+GATK_PCA_fig <- GATK_PCA_fig + guides(alpha=FALSE)
+GATK_PCA_fig <- GATK_PCA_fig + theme(legend.title.align=0.5,axis.text=element_text(size=30),legend.text = element_text(size=25),axis.title=element_text(size=30), legend.title = element_text(size=30), panel.background = element_blank(),panel.border=element_rect(fill=NA),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),strip.background=element_blank(),axis.text.x=element_text(colour="black"),axis.text.y=element_text(colour="black"),axis.ticks=element_line(colour="black"),plot.margin=unit(c(1,1,1,1),"line"))
+GATK_PCA_fig
+
+#saving the image
+#ggsave("GATK_PCA.pdf")
+```
+
+
+#Stacks
+This was done with the data from the run of Stacks with p=6 and r=.6
+```{r}
+#preparing data 
+stacks.genlight <- vcfR2genlight(stacks_vcf, n.cores=1)
+stacks.pca <- glPcaFast(stacks.genlight, nf=300)
+stacks.pca
+stacks.pca$eig[1]/sum(stacks.pca $eig)
+stacks.pca$eig[2]/sum(stacks.pca $eig)
+
+#looking at barplot of eigen values
+barplot(100*stacks.pca$eig/sum(stacks.pca $eig), col = heat.colors(50), main="PCA Eigenvalues") +
+title(ylab="Percent of variance\nexplained", line = 2) +
+title(xlab="Eigenvalues", line = 1)
+
+#loading in population info
+stacks.pop.data <- read.table("stacks_poplabel", sep = "\t", header = TRUE)
+#confirming accurate number
+all(colnames(vcf@gt)[-1] == stacks.pop.data$ID) #nailed it
+
+#indicating the ploidy number
+ploidy(stacks.genlight) <- 2
+
+#adding in the population data
+pop(stacks.genlight) <- stacks.pop.data$STATE
+
+```
+
+```{r}
+#making a PCA plot
+stacks.pca.scores <- as.data.frame(stacks.pca$scores)
+stacks.pca.scores$pop <- pop(stacks.genlight)
+
+#choosing which components to focus on
+comp <- c(1,2)
+
+#making labels
+x_axis_label_stacks = paste("PC",comp[1]," (",signif(stacks.pca$eig[1]/sum(stacks.pca$eig), digits=3)*100,"%)",sep="",collapse="")
+y_axis_label_stacks = paste("PC",comp[2]," (",signif(stacks.pca$eig[2]/sum(stacks.pca$eig), digits=3)*100,"%)",sep="",collapse="")
+
+#setting the color scheme again
+cols <- c("darkgreen", "darkolivegreen", "black", "darkblue", "dodgerblue", "cyan")
+
+stacks_PCA_fig<- ggplot(stacks.pca.scores, aes(x=PC1, y=PC2, colour=pop, alpha=.7)) 
+stacks_PCA_fig<- stacks_PCA_fig+ geom_point(size=4.5)
+stacks_PCA_fig<- stacks_PCA_fig+ stat_ellipse(level = 0.95, size = 1)
+stacks_PCA_fig<- stacks_PCA_fig+ scale_color_manual(values = cols) 
+stacks_PCA_fig<- stacks_PCA_fig+ scale_color_manual(values = cols, name= "Well", labels = c("Kalispell GRBD", "Kalispell ST5R", "Wurtz", "Nyack HA15", "Nyack HA19", "Nyack HA9")) 
+stacks_PCA_fig<- stacks_PCA_fig+ geom_hline(yintercept = 0) 
+stacks_PCA_fig<- stacks_PCA_fig+ geom_vline(xintercept = 0) 
+stacks_PCA_fig<- stacks_PCA_fig+ theme_classic(base_family = "serif")
+stacks_PCA_fig <- stacks_PCA_fig + xlab(x_axis_label_stacks)
+stacks_PCA_fig <- stacks_PCA_fig + ylab(y_axis_label_stacks)
+stacks_PCA_fig <- stacks_PCA_fig + guides(alpha=FALSE)
+stacks_PCA_fig <- stacks_PCA_fig + theme(legend.title.align=0.5,axis.text=element_text(size=30),legend.text = element_text(size=25),axis.title=element_text(size=30), legend.title = element_text(size=30), panel.background = element_blank(),panel.border=element_rect(fill=NA),panel.grid.major = element_blank(),panel.grid.minor = element_blank(),strip.background=element_blank(),axis.text.x=element_text(colour="black"),axis.text.y=element_text(colour="black"),axis.ticks=element_line(colour="black"),plot.margin=unit(c(1,1,1,1),"line"))
+stacks_PCA_fig
+
+
+ggsave("Stacks_PCA.pdf")
+```
+
+#Combining
+```{r}
+PCA_figure <- ggarrange(stacks_PCA_fig, GATK_PCA_fig, angsd_PCA_fig_whitelist,
+                     labels = c("a", "b", "c"),
+                     ncol = 1, nrow = 3)
+PCA_figure
+```
+
+
+#Citations
+Aid in the form of an R script for plotting PCAngsd output from: M. Fumagalli
+The glPCAFast script is from the adegenet github page:
+https://github.com/thibautjombart/adegenet/pull/150/commits/a852b267c2b768f48ec95f20fff43d82e371da02
+Jombart, T. (2008). adegenet: a R package for the multivariate analysis of genetic markers. Bioinformatics, 24(11), 1403-1405.
+
