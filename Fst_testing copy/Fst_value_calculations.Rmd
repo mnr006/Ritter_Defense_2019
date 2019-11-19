@@ -1,0 +1,72 @@
+---
+title: "Fst_value_calculations"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+#Loading necessary packages
+```{r}
+#corrplot is used to visualize the Fst values
+if(!require(corrplot)){install.packages("corrplot");library(corrplot)}
+```
+
+
+#Setting up the project
+```{r}
+# setting working directory to proper location
+setwd("~/Desktop/Ritter_Defense_2019/Fst_testing copy")
+# loading in the data generated from angsd -> weighted Fst values, these were organized into a datafrome in excel and saved as a csv
+weighted_Fst_data <- read.csv("Fst_nofilter_whitelist.csv", 
+row.names=1)
+
+#looking at data to confirm it was imported correctly
+weighted_Fst_data #looks good
+
+#renaming data columns
+names(weighted_Fst_data)[names(weighted_Fst_data) == "Kalispell_GRBD"] <- "Kalispell GRBD"
+names(weighted_Fst_data)[names(weighted_Fst_data) == "Kalispell_ST5R"] <- "Kalispell ST5R"
+names(weighted_Fst_data)[names(weighted_Fst_data) == "Nyack_HA15"] <- "Nyack HA15"
+names(weighted_Fst_data)[names(weighted_Fst_data) == "Nyack_19"] <- "Nyack HA19"
+names(weighted_Fst_data)[names(weighted_Fst_data) == "Nyack_9"] <- "Nyack HA9"
+#checking this
+weighted_Fst_data #looks good
+
+#renaming row columns
+row.names(weighted_Fst_data)[row.names(weighted_Fst_data) == "Kalispell_GRBD"] <- "Kalispell GRBD"
+row.names(weighted_Fst_data)[row.names(weighted_Fst_data) == "Kalispell_ST5R"] <- "Kalispell ST5R"
+row.names(weighted_Fst_data)[row.names(weighted_Fst_data) == "Nyack_HA15"] <- "Nyack HA15"
+row.names(weighted_Fst_data)[row.names(weighted_Fst_data) == "Nyack_19"] <- "Nyack HA19"
+row.names(weighted_Fst_data)[row.names(weighted_Fst_data) == "Nyack_9"] <- "Nyack HA9"
+#checking this out
+weighted_Fst_data #looksgood
+```
+
+```{r}
+#colored labels
+corrplot(as.matrix(weighted_Fst_data), type = "upper", 
+         tl.col = c("darkgreen", "darkolivegreen", "black", "darkblue", "dodgerblue", "cyan"), 
+cl.lim=c(0,.1), is.corr = FALSE, col=colorRampPalette(c("white", "red"))(100), addgrid.col="black", method="color", cl.ratio = 0.2, tl.pos="dt", number.cex=2)
+
+col2 <- colorRampPalette(c("#67001F", "#B2182B", "#D6604D", "#F4A582",
+                           "#FDDBC7", "#FFFFFF", "#D1E5F0", "#92C5DE",
+                           "#4393C3", "#2166AC", "#053061"))
+
+corrplot(as.matrix(weighted_Fst_data), type = "upper", 
+         tl.col = c("darkgreen", "darkolivegreen", "black", "darkblue", "dodgerblue", "cyan"), 
+cl.lim=c(0,.1), is.corr = FALSE, addgrid.col="black", method="color", cl.ratio = 0.2, tl.pos="dt", number.cex=2, addCoef.col= "black", tl.cex = 1.5, number.digits=4)
+
+#black labels
+corrplot(as.matrix(weighted_Fst_data), type = "upper", 
+         tl.col = "black",
+cl.lim=c(0,.1), is.corr = FALSE, col=colorRampPalette(c("blue", "red"))(10), addgrid.col="white", method="square", cl.ratio = 0.2, tl.pos="d")
+
+#mixed corr. plot
+corrplot.mixed(as.matrix(weighted_Fst_data), 
+         tl.col = "black", 
+cl.lim=c(0,.1), is.corr = FALSE, addgrid.col="white", number.digits= 3)
+
+```
+
+
+
