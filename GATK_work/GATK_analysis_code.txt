@@ -1,0 +1,456 @@
+#Make seq. Dictionary for reference fasta to run GATK
+#needed to download picard.jar (v.2.20.4) for the CreateSequenceDictionary task
+
+#working here: /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_bam_files
+
+java -jar ../picard.jar CreateSequenceDictionary R=/home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa 
+
+#took less than a second to run this
+#citation for picard:
+
+“Picard Toolkit.” 2019. Broad Institute, GitHub Repository. http://broadinstitute.github.io/picard/; Broad Institute
+############################################
+#working in: /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_bam_files/GATK_work
+
+#!/bin/bash
+#name: GATK_haplotypecaller_dataset1.sh
+#SBATCH --job-name="GATK" #job name
+#SBATCH -p short # partition
+#SBATCH --mem-per-cpu=24G
+#SBATCH -N 1
+#SBATCH --mail-user=mnr006@bucknell.edu #address to email
+#SBATCH --mail-type=ALL # mail events (NONE, BEGIN, END, FAIL, ALL)
+#SBATCH --array=0-226%40
+#SBATCH -output=samtools_index_%A_%a.out #will give a bunch of output files
+
+FILES=(*.bam) #needed to delete files and make sure correct 226 were chosen to proceed in GATK_work folder
+
+#cleaning up how the files can be written into the code
+file_out=${FILES[$SLURM_ARRAY_TASK_ID]}
+file_out=${file_out/.sam.bam/}
+
+#outputting what file is being used to keep track
+echo ${FILES[$SLURM_ARRAY_TASK_ID]}
+echo $file_out
+
+#running HaplotypeCaller
+java -Xmx24g -jar ../GenomeAnalysisTK.jar -T HaplotypeCaller -R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa -I ${FILES[$SLURM_ARRAY_TASK_ID]} --emitRefConfidence GVCF --annotation AlleleBalance --annotation AlleleBalanceBySample -o ${file_out}.output.raw.snps.indels.g.vcf -log ${file_out}.HC.log
+
+##############################################
+#Combine vcfs to prepare for reading them- combining in groups of 10
+
+
+#!/bin/bash
+#name: vcf_combining_all.sh
+#SBATCH --job-name="vcf" #job name
+#SBATCH -p medium # partition 
+#SBATCH -N 1
+#SBATCH --mail-user=mnr006@bucknell.edu #address to email
+#SBATCH --mail-type=ALL # mail events (NONE, BEGIN, END, FAIL, ALL)
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_100.output.raw.snps.indels.g.vcf \
+--variant SS_175.output.raw.snps.indels.g.vcf \
+--variant SS_247.output.raw.snps.indels.g.vcf \
+--variant SS_101.output.raw.snps.indels.g.vcf \
+--variant SS_176.output.raw.snps.indels.g.vcf \
+--variant SS_248.output.raw.snps.indels.g.vcf \
+--variant SS_102.output.raw.snps.indels.g.vcf \
+--variant SS_177.output.raw.snps.indels.g.vcf \
+--variant SS_24.output.raw.snps.indels.g.vcf \
+-o SS_1.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_103.output.raw.snps.indels.g.vcf \
+--variant SS_178.output.raw.snps.indels.g.vcf \
+--variant SS_25.output.raw.snps.indels.g.vcf \
+--variant SS_104.output.raw.snps.indels.g.vcf \
+--variant SS_179.output.raw.snps.indels.g.vcf \
+--variant SS_26.output.raw.snps.indels.g.vcf \
+--variant SS_105.output.raw.snps.indels.g.vcf \
+--variant SS_17.output.raw.snps.indels.g.vcf \
+--variant SS_27.output.raw.snps.indels.g.vcf \
+--variant SS_106.output.raw.snps.indels.g.vcf \
+-o SS_2.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_180.output.raw.snps.indels.g.vcf \
+--variant SS_28.output.raw.snps.indels.g.vcf \
+--variant SS_108.output.raw.snps.indels.g.vcf \
+--variant SS_181.output.raw.snps.indels.g.vcf \
+--variant SS_29.output.raw.snps.indels.g.vcf \
+--variant SS_109.output.raw.snps.indels.g.vcf \
+--variant SS_183.output.raw.snps.indels.g.vcf \
+--variant SS_30.output.raw.snps.indels.g.vcf \
+--variant SS_110.output.raw.snps.indels.g.vcf \
+--variant SS_184.output.raw.snps.indels.g.vcf \
+-o SS_3.g.vcf > combine_GVCFs_nohup_1.out
+
+ java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_31.output.raw.snps.indels.g.vcf \
+--variant SS_111.output.raw.snps.indels.g.vcf \
+--variant SS_185.output.raw.snps.indels.g.vcf \
+--variant SS_32.output.raw.snps.indels.g.vcf \
+--variant SS_112.output.raw.snps.indels.g.vcf \
+--variant SS_186.output.raw.snps.indels.g.vcf \
+--variant SS_33.output.raw.snps.indels.g.vcf \
+--variant SS_113.output.raw.snps.indels.g.vcf \
+--variant SS_187.output.raw.snps.indels.g.vcf \
+--variant SS_34.output.raw.snps.indels.g.vcf \
+-o SS_4.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_188.output.raw.snps.indels.g.vcf \
+--variant SS_35.output.raw.snps.indels.g.vcf \
+--variant SS_115.output.raw.snps.indels.g.vcf \
+--variant SS_189.output.raw.snps.indels.g.vcf \
+--variant SS_36.output.raw.snps.indels.g.vcf \
+--variant SS_116.output.raw.snps.indels.g.vcf \
+--variant SS_18.output.raw.snps.indels.g.vcf \
+--variant SS_37.output.raw.snps.indels.g.vcf \
+--variant SS_117.output.raw.snps.indels.g.vcf \
+-o SS_5.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_190.output.raw.snps.indels.g.vcf \
+--variant SS_38.output.raw.snps.indels.g.vcf \
+--variant SS_118.output.raw.snps.indels.g.vcf \
+--variant SS_191.output.raw.snps.indels.g.vcf \
+--variant SS_39.output.raw.snps.indels.g.vcf \
+--variant SS_119.output.raw.snps.indels.g.vcf \
+--variant SS_192.output.raw.snps.indels.g.vcf \
+--variant SS_40.output.raw.snps.indels.g.vcf \
+--variant SS_120.output.raw.snps.indels.g.vcf \
+--variant SS_193.output.raw.snps.indels.g.vcf \
+-o SS_6.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_41.output.raw.snps.indels.g.vcf \
+--variant SS_121.output.raw.snps.indels.g.vcf \
+--variant SS_194.output.raw.snps.indels.g.vcf \
+--variant SS_42.output.raw.snps.indels.g.vcf \
+--variant SS_122.output.raw.snps.indels.g.vcf \
+--variant SS_195.output.raw.snps.indels.g.vcf \
+--variant SS_43.output.raw.snps.indels.g.vcf \
+--variant SS_123.output.raw.snps.indels.g.vcf \
+--variant SS_196.output.raw.snps.indels.g.vcf \
+--variant SS_45.output.raw.snps.indels.g.vcf \
+-o SS_7.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_124.output.raw.snps.indels.g.vcf \
+--variant SS_197.output.raw.snps.indels.g.vcf \
+--variant SS_46.output.raw.snps.indels.g.vcf \
+--variant SS_125.output.raw.snps.indels.g.vcf \
+--variant SS_198.output.raw.snps.indels.g.vcf \
+--variant SS_47.output.raw.snps.indels.g.vcf \
+--variant SS_126.output.raw.snps.indels.g.vcf \
+--variant SS_199.output.raw.snps.indels.g.vcf \
+--variant SS_48.output.raw.snps.indels.g.vcf \
+--variant SS_127.output.raw.snps.indels.g.vcf \
+-o SS_8.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_19.output.raw.snps.indels.g.vcf \
+--variant SS_49.output.raw.snps.indels.g.vcf \
+--variant SS_128.output.raw.snps.indels.g.vcf \
+--variant SS_200.output.raw.snps.indels.g.vcf \
+--variant SS_50.output.raw.snps.indels.g.vcf \
+--variant SS_129.output.raw.snps.indels.g.vcf \
+--variant SS_201.output.raw.snps.indels.g.vcf \
+--variant SS_51.output.raw.snps.indels.g.vcf \
+--variant SS_130.output.raw.snps.indels.g.vcf \
+--variant SS_202.output.raw.snps.indels.g.vcf \
+-o SS_9.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_52.output.raw.snps.indels.g.vcf \
+--variant SS_131.output.raw.snps.indels.g.vcf \
+--variant SS_203.output.raw.snps.indels.g.vcf \
+--variant SS_53.output.raw.snps.indels.g.vcf \
+--variant SS_132.output.raw.snps.indels.g.vcf \
+--variant SS_204.output.raw.snps.indels.g.vcf \
+--variant SS_54.output.raw.snps.indels.g.vcf \
+--variant SS_133.output.raw.snps.indels.g.vcf \
+--variant SS_205.output.raw.snps.indels.g.vcf \
+--variant SS_55.output.raw.snps.indels.g.vcf \
+-o SS_10.g.vcf > combine_GVCFs_nohup_1.out 
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_134.output.raw.snps.indels.g.vcf \
+--variant SS_206.output.raw.snps.indels.g.vcf \
+--variant SS_56.output.raw.snps.indels.g.vcf \
+--variant SS_135.output.raw.snps.indels.g.vcf \
+--variant SS_207.output.raw.snps.indels.g.vcf \
+--variant SS_57.output.raw.snps.indels.g.vcf \
+--variant SS_136.output.raw.snps.indels.g.vcf \
+--variant SS_208.output.raw.snps.indels.g.vcf \
+--variant SS_58.output.raw.snps.indels.g.vcf \
+--variant SS_137.output.raw.snps.indels.g.vcf \
+-o SS_11.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_209.output.raw.snps.indels.g.vcf \
+--variant SS_59.output.raw.snps.indels.g.vcf \
+--variant SS_138.output.raw.snps.indels.g.vcf \
+--variant SS_20.output.raw.snps.indels.g.vcf \
+--variant SS_60.output.raw.snps.indels.g.vcf \
+--variant SS_140.output.raw.snps.indels.g.vcf \
+--variant SS_210.output.raw.snps.indels.g.vcf \
+--variant SS_61.output.raw.snps.indels.g.vcf \
+--variant SS_141.output.raw.snps.indels.g.vcf \
+--variant SS_211.output.raw.snps.indels.g.vcf \
+-o SS_12.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_62.output.raw.snps.indels.g.vcf \
+--variant SS_142.output.raw.snps.indels.g.vcf \
+--variant SS_212.output.raw.snps.indels.g.vcf \
+--variant SS_63.output.raw.snps.indels.g.vcf \
+--variant SS_143.output.raw.snps.indels.g.vcf \
+--variant SS_213.output.raw.snps.indels.g.vcf \
+--variant SS_64.output.raw.snps.indels.g.vcf \
+--variant SS_144.output.raw.snps.indels.g.vcf \
+--variant SS_214.output.raw.snps.indels.g.vcf \
+--variant SS_65.output.raw.snps.indels.g.vcf \
+-o SS_13.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_145.output.raw.snps.indels.g.vcf \
+--variant SS_215.output.raw.snps.indels.g.vcf \
+--variant SS_66.output.raw.snps.indels.g.vcf \
+--variant SS_146.output.raw.snps.indels.g.vcf \
+--variant SS_216.output.raw.snps.indels.g.vcf \
+--variant SS_67.output.raw.snps.indels.g.vcf \
+--variant SS_147.output.raw.snps.indels.g.vcf \
+--variant SS_217.output.raw.snps.indels.g.vcf \
+--variant SS_68.output.raw.snps.indels.g.vcf \
+--variant SS_148.output.raw.snps.indels.g.vcf \
+-o SS_14.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_219.output.raw.snps.indels.g.vcf \
+--variant SS_69.output.raw.snps.indels.g.vcf \
+--variant SS_149.output.raw.snps.indels.g.vcf \
+--variant SS_21.output.raw.snps.indels.g.vcf \
+--variant SS_70.output.raw.snps.indels.g.vcf \
+--variant SS_14.output.raw.snps.indels.g.vcf \
+--variant SS_220.output.raw.snps.indels.g.vcf \
+--variant SS_71.output.raw.snps.indels.g.vcf \
+--variant SS_150.output.raw.snps.indels.g.vcf \
+--variant SS_221.output.raw.snps.indels.g.vcf \
+-o SS_15.g.vcf > combine_GVCFs_nohup_1.out
+
+ java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_72.output.raw.snps.indels.g.vcf \
+--variant SS_151.output.raw.snps.indels.g.vcf \
+--variant SS_222.output.raw.snps.indels.g.vcf \
+--variant SS_73.output.raw.snps.indels.g.vcf \
+--variant SS_152.output.raw.snps.indels.g.vcf \
+--variant SS_223.output.raw.snps.indels.g.vcf \
+--variant SS_74.output.raw.snps.indels.g.vcf \
+--variant SS_153.output.raw.snps.indels.g.vcf \
+--variant SS_224.output.raw.snps.indels.g.vcf \
+--variant SS_75.output.raw.snps.indels.g.vcf \
+-o SS_16.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_154.output.raw.snps.indels.g.vcf \
+--variant SS_225.output.raw.snps.indels.g.vcf \
+--variant SS_76.output.raw.snps.indels.g.vcf \
+--variant SS_155.output.raw.snps.indels.g.vcf \
+--variant SS_226.output.raw.snps.indels.g.vcf \
+--variant SS_77.output.raw.snps.indels.g.vcf \
+--variant SS_156.output.raw.snps.indels.g.vcf \
+--variant SS_227.output.raw.snps.indels.g.vcf \
+--variant SS_78.output.raw.snps.indels.g.vcf \
+--variant SS_157.output.raw.snps.indels.g.vcf \
+-o SS_17.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_228.output.raw.snps.indels.g.vcf \
+--variant SS_79.output.raw.snps.indels.g.vcf \
+--variant SS_158.output.raw.snps.indels.g.vcf \
+--variant SS_229.output.raw.snps.indels.g.vcf \
+--variant SS_80.output.raw.snps.indels.g.vcf \
+--variant SS_159.output.raw.snps.indels.g.vcf \
+--variant SS_22.output.raw.snps.indels.g.vcf \
+--variant SS_82.output.raw.snps.indels.g.vcf \
+--variant SS_15.output.raw.snps.indels.g.vcf \
+--variant SS_230.output.raw.snps.indels.g.vcf \
+-o SS_18.g.vcf > combine_GVCFs_nohup_1.out
+
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_160.output.raw.snps.indels.g.vcf \
+--variant SS_231.output.raw.snps.indels.g.vcf \
+--variant SS_84.output.raw.snps.indels.g.vcf \
+--variant SS_161.output.raw.snps.indels.g.vcf \
+--variant SS_232.output.raw.snps.indels.g.vcf \
+--variant SS_85.output.raw.snps.indels.g.vcf \
+--variant SS_162.output.raw.snps.indels.g.vcf \
+--variant SS_233.output.raw.snps.indels.g.vcf \
+--variant SS_87.output.raw.snps.indels.g.vcf \
+-o SS_19.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_163.output.raw.snps.indels.g.vcf \
+--variant SS_235.output.raw.snps.indels.g.vcf \
+--variant SS_88.output.raw.snps.indels.g.vcf \
+--variant SS_164.output.raw.snps.indels.g.vcf \
+--variant SS_236.output.raw.snps.indels.g.vcf \
+--variant SS_89.output.raw.snps.indels.g.vcf \
+--variant SS_165.output.raw.snps.indels.g.vcf \
+--variant SS_237.output.raw.snps.indels.g.vcf \
+--variant SS_90.output.raw.snps.indels.g.vcf \
+--variant SS_166.output.raw.snps.indels.g.vcf \
+-o SS_20.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_238.output.raw.snps.indels.g.vcf \
+--variant SS_91.output.raw.snps.indels.g.vcf \
+--variant SS_167.output.raw.snps.indels.g.vcf \
+--variant SS_239.output.raw.snps.indels.g.vcf \
+--variant SS_92.output.raw.snps.indels.g.vcf \
+--variant SS_168.output.raw.snps.indels.g.vcf \
+--variant SS_23.output.raw.snps.indels.g.vcf \
+--variant SS_93.output.raw.snps.indels.g.vcf \
+--variant SS_169.output.raw.snps.indels.g.vcf \
+--variant SS_240.output.raw.snps.indels.g.vcf \
+-o SS_21.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_94.output.raw.snps.indels.g.vcf \
+--variant SS_16.output.raw.snps.indels.g.vcf \
+--variant SS_241.output.raw.snps.indels.g.vcf \
+--variant SS_95.output.raw.snps.indels.g.vcf \
+--variant SS_170.output.raw.snps.indels.g.vcf \
+--variant SS_242.output.raw.snps.indels.g.vcf \
+--variant SS_96.output.raw.snps.indels.g.vcf \
+--variant SS_171.output.raw.snps.indels.g.vcf \
+--variant SS_243.output.raw.snps.indels.g.vcf \
+--variant SS_97.output.raw.snps.indels.g.vcf \
+-o SS_22.g.vcf > combine_GVCFs_nohup_1.out
+
+java -Xmx4g -jar ../GenomeAnalysisTK.jar \
+-T CombineGVCFs \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_172.output.raw.snps.indels.g.vcf \
+--variant SS_244.output.raw.snps.indels.g.vcf \
+--variant SS_99.output.raw.snps.indels.g.vcf \
+--variant SS_173.output.raw.snps.indels.g.vcf \
+--variant SS_245.output.raw.snps.indels.g.vcf \
+--variant SS_174.output.raw.snps.indels.g.vcf \
+--variant SS_246.output.raw.snps.indels.g.vcf \
+--variant SS_114.output.raw.snps.indels.g.vcf \
+--variant SS_83.output.raw.snps.indels.g.vcf \
+-o SS_23.g.vcf > combine_GVCFs_nohup_1.out
+
+
+############################
+#Run Genotype
+
+
+#!/bin/bash
+#name: genotyping_combined_vcfs.sh
+#SBATCH --job-name="geno" #job name
+#SBATCH -p medium # partition 
+#SBATCH -N 1
+#SBATCH --mem-per-cpu=150G
+#SBATCH --mail-user=mnr006@bucknell.edu #address to email
+#SBATCH --mail-type=ALL # mail events (NONE, BEGIN, END, FAIL, ALL)
+
+#could run this multithreaded next time using: TreeReducible -nt
+
+java -Xmx150g -jar ../GenomeAnalysisTK.jar \
+-T GenotypeGVCFs --annotation AlleleBalance --annotation AlleleBalanceBySample \
+-R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa \
+--variant SS_1.g.vcf  \
+--variant SS_2.g.vcf  \
+--variant SS_3.g.vcf  \
+--variant SS_4.g.vcf  \
+--variant SS_5.g.vcf  \
+--variant SS_6.g.vcf  \
+--variant SS_7.g.vcf  \
+--variant SS_8.g.vcf  \
+--variant SS_9.g.vcf  \
+--variant SS_10.g.vcf  \
+--variant SS_11.g.vcf  \
+--variant SS_12.g.vcf  \
+--variant SS_13.g.vcf  \
+--variant SS_14.g.vcf  \
+--variant SS_15.g.vcf  \
+--variant SS_16.g.vcf  \
+--variant SS_17.g.vcf  \
+--variant SS_18.g.vcf  \
+--variant SS_19.g.vcf  \
+--variant SS_20.g.vcf  \
+--variant SS_21.g.vcf  \
+--variant SS_22.g.vcf  \
+--variant SS_23.g.vcf  \
+-o stgo_gvcfs.snps.indels.vcf > genotype_gvcfs_test_nohup.out 
+
+################################
+#first selecting snps (not indels)
+java -jar ../GenomeAnalysisTK.jar -T SelectVariants -R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa -V stgo_gvcfs.snps.indels.vcf -selectType SNP -o raw_snps.vcf
+
+################################
+
+#hard filtering
+java -jar ../GenomeAnalysisTK.jar -T VariantFiltration -R /home/mnr006/Thesis_Work/denovo_all_lanes_Mn7_condensed_output_subsample/filtered_scaffold/stygo_stitched_scaffold_filtered.fa -V raw_snps.vcf --filterExpression "QD < 2.0 || FS > 60.0 || MQ < 40.0 || MQRankSum < -12.5 || ReadPosRankSum < -8.0" --filterName "my_snp_filter" -o filtered_snps.vcf
+
+################################
+
+#removal of failed sites
+#removed those sites that were flagged in GATK with vcftools
+
+module load seq_tools
+
+vcftools --vcf filtered_snps.vcf --remove-filtered-all --recode --out 1_failed_removed.recode.vcf
+#output file: 1_failed_removed.recode.vcf
+
+################################

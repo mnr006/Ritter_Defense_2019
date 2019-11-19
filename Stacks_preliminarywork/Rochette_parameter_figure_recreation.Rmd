@@ -1,0 +1,70 @@
+---
+title: "Rochette_figure_recreation"
+author: "Megan Ritter"
+date: "10/25/2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Package loading
+```{r}
+#dplyr used to visualize plots
+if(!require(ggplot2)){install.packages("ggplot2");library(ggplot2)}
+```
+
+#Setting up the data
+Uploading data that was generated in stacks and organized in excel into proper table format
+```{r}
+#setting the workind directory
+setwd("~/Desktop/Ritter_Defense_2019/Stacks_preliminarywork")
+
+#loading in data and checking it looks accurate
+data_figure_2a <- read.csv("Rochette_figure_loci_polymorphic.csv")
+head(data_figure_2a)
+
+data_figure_2b <- read.csv("Rochette_figure_nsnps.csv")
+head(data_figure_2b)
+```
+
+#Visualizing the figures
+
+These are recreations of figures originally produced in Rochette and Catchen (2017)
+```{r}
+#figure 2a recreation
+ggplot(data_figure_2a, aes(x=as.factor(M_n), y=count, group=type)) +
+  geom_line(aes(linetype=type), size=1.5)+
+  geom_point(size=3)+
+  theme_classic(base_family = "serif") +
+  scale_linetype_manual(values=c("solid", "dotted"), name= "Loci", labels= c("All", "Polymorphic")) +
+  labs(x="Value of the M and n parameters", y = "No. of loci \n shared by 80% of samples", fill= "Loci") +
+  ylim(0,21000) +
+  theme(legend.title.align=0.5, legend.position = c(0.9, 0.2), axis.text=element_text(size=30),legend.text = element_text(size=25),
+        axis.title=element_text(size=30), legend.title = element_text(size=30)) 
+ggsave("Rochette_figure_recreation_2a.pdf")
+
+
+#figure 2b recreation
+ggplot(data_figure_2b, aes(fill=as.factor(M_n), y=n_loci, x=as.factor(n_snps))) + 
+    geom_bar(position="dodge", stat="identity") +
+  theme_classic(base_family="serif") +
+  labs(x="Number of SNPs", y = "Proportion of loci") +
+  scale_fill_brewer(name="Value of the M \n and n parameters",palette="RdBu") +
+  scale_y_continuous(expand = c(0,0),
+                     limits = c(0,.8))+
+  theme(legend.title.align=0.5, legend.position = c(0.85, 0.6), axis.text=element_text(size=25),legend.text = element_text(size=25),
+        axis.title=element_text(size=30), legend.title = element_text(size=30, margin = margin(t = 10, b = 5))) +
+  coord_cartesian(ylim=c(0, .85))
+ggsave("Rochette_figure_recreation_2b_RedBlue_labels.pdf")
+
+```
+
+Lit Cited:
+Rochette, N. C., & Catchen, J. M. (2017). Deriving genotypes from RAD-seq short-read data using stacks. Nature Protocols, 12(12), 2640-2659. doi:10.1038/nprot.2017.123
+
+
+
