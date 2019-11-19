@@ -15,7 +15,7 @@ if(!require(corrplot)){install.packages("corrplot");library(corrplot)}
 #Setting up the project
 ```{r}
 # setting working directory to proper location
-setwd("~/Desktop/Ritter_Defense_2019/Fst_testing copy")
+setwd("~/Desktop/Ritter_Defense_2019/Fst_testing")
 # loading in the data generated from angsd -> weighted Fst values, these were organized into a datafrome in excel and saved as a csv
 weighted_Fst_data <- read.csv("Fst_nofilter_whitelist.csv", 
 row.names=1)
