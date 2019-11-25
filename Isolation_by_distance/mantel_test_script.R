@@ -8,8 +8,10 @@ setwd("~/Desktop/Ritter_Defense_2019/Isolation_by_distance")
 
 #loading in data
 corrected<-as.dist(read.csv("corrected_Fst.csv", header= FALSE))
-distance <-as.dist(read.csv("distance.csv", header= FALSE))
+pointtopoint_distance <-as.dist(read.csv("pointtopoint_distance.csv", header= FALSE))
+rivermiles_distance <-as.dist(read.csv("rivermile_distance.csv", header= FALSE))
 
-mantel(corrected, distance)
+mantel(corrected, pointtopoint_distance)
+mantel(corrected, rivermiles_distance)
 
-        
+

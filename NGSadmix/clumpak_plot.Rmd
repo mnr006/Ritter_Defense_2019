@@ -1,0 +1,39 @@
+---
+title: "Clumpak_plot"
+output: html_notebook
+---
+
+Remaking the clumpak "best K" plot to be more visually appealing.
+
+```{r}
+#setting working directory
+setwd("~/Desktop/Ritter_Defense_2019/NGSadmix")
+
+#loading necessary packages
+if(!require(ggplot2)){install.packages("ggplot2");library(ggplot2)} #ggplot2 used for visualizing data
+if(!require(dplyr)){install.packages("dplyr");library(dplyr)} #used for manipulating data
+
+#reading in the log file generated from CLUMPAK program
+log_files <- read.table("clumpak_output_formatted")
+
+#checking format of this variable
+head(log_files)
+
+#changing table column names
+names(log_files)[names(log_files) == "V1"] <- "K_value"
+names(log_files)[names(log_files) == "V2"] <- "Delta_K"
+
+#double checking column names have changed
+head(log_files)
+```
+
+
+Now working on manipultaing the table to get the average or mean delta K values for each value of K
+```{r}
+
+ggplot(log_files, aes(x=K_value, y=Delta_K)) +
+  geom_line()
+
+```
+
+
